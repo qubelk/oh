@@ -17,8 +17,9 @@ for f in paths:
 		os.makedirs(os.path.dirname(build_path))
 
 	# Use clang, for -Weverything flag
-	subprocess.run(["clang", "-Isrc/", "-c", f, "-o", build_path + ".o", "-Weverything"])
+	subprocess.run(f"clang -Isrc/ -c {f} -o {build_path + ".o"} -Weverything", shell=True)
 	objects.append(build_path + ".o")
 
 build_path = os.path.join("build", "oh")
-subprocess.run(["clang", "-Isrc/", "-o", build_path, " ".join(objects)])
+objects_string = " ".join(objects)
+subprocess.run(f"clang -Isrc/ -o {build_path} {objects_string}", shell=True)
