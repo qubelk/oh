@@ -7,18 +7,26 @@
 #include <string.h>
 #include <sys/stat.h>
 
+// This enum is returned value of ohfile search.
+enum {
+	OH_ERR_FAILED_TO_OPEN_DIRECTORY,
+	OH_ERR_FILE_NOT_FOUND,
+	OH_OHFILE_UPPER,
+	OH_OHFILE_LOWER,
+};
+
 // Search for `Ohfile` or `ohfile` in current directory.
 // @return
-// 	-1: if failed to open current directory.
-// 	0: if file not found.
-//	1: if its `Ohfile`.
-// 	2: if its `ohfile`.
+// 	OH_ERR_FAILED_TO_OPEN_DIRECTORY: if failed to open current directory.
+// 	OH_ERR_FILE_NOT_FOUND: if file not found.
+//	OH_OHFILE_UPPER: if its `Ohfile`.
+// 	OH_OHFILE_LOWER: if its `ohfile`.
 //
 // This returns need for pattern matching.
-static inline int search_ohfile() {
+static int search_ohfile() {
 	DIR* rootdir = opendir("./");
 	if (rootdir == NULL) {
-		return -1;
+		return OH_ERR_FAILED_TO_OPEN_DIRECTORY;
 	}
 
 	struct stat file_stat;
@@ -32,39 +40,50 @@ static inline int search_ohfile() {
 
 		if (strcmp(dir->d_name, "Ohfile") == 0) {
 			closedir(rootdir);
-			return 1;
+			return OH_OHFILE_UPPER;
 		} else if (strcmp(dir->d_name, "ohfile") == 0) {
 			closedir(rootdir);
-			return 2;
+			return OH_OHFILE_LOWER;
 		}
 	}
 
 	closedir(rootdir);
-	return 0;
+	return OH_ERR_FILE_NOT_FOUND;
 }
 
-int parser_init() {
-	FILE* f;
+static FILE* open_ohfile() {
 	int ret = search_ohfile();
 
 	switch (ret) {
-	case -1:
-		die("Failed to open current directory: %s\n", strerror(errno));
-	case 0:
-		die("Failed to find `Ohfile` or `ohfile`: File doesn't exists\n");
-	case 1:
-		f = fopen("Ohfile", "r");
-		if (f == NULL) {
-			die("Failed to open Ohfile: %s\n", strerror(errno));
+		case OH_ERR_FAILED_TO_OPEN_DIRECTORY: {
+			die("Failed to open current directory: %s\n", strerror(errno));
 		}
-		break;
-	case 2:
-		f = fopen("ohfile", "r");
-		if (f == NULL) {
-			die("Failed to open ohfile: %s\n", strerror(errno));
-		}
-		break;
-	}
 
+		case OH_ERR_FILE_NOT_FOUND: {
+			die("Failed to find `Ohfile` or `ohfile`: File doesn't exists\n");
+		}
+
+		case OH_OHFILE_UPPER: {
+			FILE* f = fopen("Ohfile", "r");
+			if (f == NULL) {
+				die("Failed to open Ohfile: %s\n", strerror(errno));
+			}
+
+			return f;
+		}
+
+		case OH_OHFILE_LOWER: {
+			FILE* f = fopen("ohfile", "r");
+			if (f == NULL) {
+				die("Failed to open ohfile: %s\n", strerror(errno));
+			}
+
+			return f;
+		}
+	}
+}
+
+int parser_init() {
+	FILE* f = open_ohfile();
 	return 1;
 }
