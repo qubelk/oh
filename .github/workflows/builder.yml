@@ -1,0 +1,19 @@
+name: Builder
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: change chmod
+      run: chmod +x ./scripts/build.py
+    - name: build
+      run: ./scripts/build.py
