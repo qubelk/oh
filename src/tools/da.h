@@ -18,6 +18,18 @@
 		da.data[da.count++] = item;\
 	} while (0)
 
-// For now we need only DA_APPEND.
+#define DA_FREE(da) \
+	do {\
+		free(da.data);\
+	} while (0)
+
+// Use it for dynamic array of pointers.
+#define DA_POINTERS_FREE(da) \
+	do {\
+		for (size_t i = 0; i < da.count; ++i) {\
+			free(da.data[i]);\
+		}\
+		free(da.data);\
+	} while (0)
 
 #endif
