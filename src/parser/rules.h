@@ -16,13 +16,15 @@ typedef struct {
 
 	// Cmd is a body of command, be called by shell.
 	char* cmd;
-} Command;
+} Rule;
 
-// Dynamic array of Commands
+Rule* rule_alloc(char* name, Files* deps, char* cmd);
+
+// Dynamic array of Rules
 typedef struct {
-	Command** data;
+	Rule** data;
 	size_t count;
 	size_t capacity;
-} Commands;
+} Rules;
 
 #endif
