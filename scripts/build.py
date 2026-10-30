@@ -2,6 +2,12 @@
 import os
 import subprocess
 
+
+# Use clang, for -Weverything flag
+cc = "clang"
+cflags: list[str] = [ "-Weverything", "-Og", "-ggdb", "-fsanitize=address,undefined" ]
+cflags_str = " ".join(cflags)
+
 paths: list[str] = []
 
 for root, dirs, files in os.walk("src/"):
@@ -16,10 +22,15 @@ for f in paths:
 	if not os.path.exists(os.path.dirname(build_path)):
 		os.makedirs(os.path.dirname(build_path))
 
-	# Use clang, for -Weverything flag
-	subprocess.run(f"clang -Isrc/ -c {f} -o {build_path + ".o"} -Weverything", shell=True)
+	command_str = f"{cc} -Isrc/ -c {f} -o {build_path + ".o"} {cflags_str}"
+	print(command_str)
+
+	subprocess.run(command_str, shell=True)
 	objects.append(build_path + ".o")
 
 build_path = os.path.join("build", "oh")
-objects_string = " ".join(objects)
-subprocess.run(f"clang -Isrc/ -o {build_path} {objects_string}", shell=True)
+objects_str = " ".join(objects)
+
+command_str = f"{cc} -Isrc/ -o {build_path} {objects_str} {cflags_str}"
+print(command_str)
+subprocess.run(command_str, shell=True)
