@@ -2,8 +2,12 @@
 #define OH_PARSER_H_
 
 // Search and open `ohfile` or `Ohfile` in root directory which `oh` cli called.
-// Now its die in any error.
-// TODO: Make error handling by return value.
+// @return
+// 	0: if init failed.
+// 	1: if init success.
 int parser_init();
+
+// Clean all parser internal data.
+void parser_free();
 
 #endif

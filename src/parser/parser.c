@@ -56,17 +56,20 @@ static FILE* open_ohfile() {
 
 	switch (ret) {
 		case OH_ERR_FAILED_TO_OPEN_DIRECTORY: {
-			die("Failed to open current directory: %s\n", strerror(errno));
+			perror("Failed to open current directory");
+			return NULL;
 		}
 
 		case OH_ERR_FILE_NOT_FOUND: {
-			die("Failed to find `Ohfile` or `ohfile`: File doesn't exists\n");
+			fprintf(stderr, "Failed to find `Ohfile` or `ohfile`: File doesn't exists\n");
+			return NULL;
 		}
 
 		case OH_OHFILE_UPPER: {
 			FILE* f = fopen("Ohfile", "r");
 			if (f == NULL) {
-				die("Failed to open Ohfile: %s\n", strerror(errno));
+				perror("Failed to open Ohfile");
+				return NULL;
 			}
 
 			return f;
@@ -75,7 +78,8 @@ static FILE* open_ohfile() {
 		case OH_OHFILE_LOWER: {
 			FILE* f = fopen("ohfile", "r");
 			if (f == NULL) {
-				die("Failed to open ohfile: %s\n", strerror(errno));
+				perror("Failed to open ohfile");
+				return NULL;
 			}
 
 			return f;
@@ -83,7 +87,19 @@ static FILE* open_ohfile() {
 	}
 }
 
+// Ohfile opening in parser_init, main function checks parser_init for fail, and die if its.
+// So no need to check this pointer to NULL.
+FILE* ohfile;
+
 int parser_init() {
-	FILE* f = open_ohfile();
+	ohfile = open_ohfile();
+	if (ohfile == NULL) {
+		return 0;
+	}
+
 	return 1;
+}
+
+void parser_free() {
+	fclose(ohfile);
 }

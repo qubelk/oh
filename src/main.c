@@ -1,6 +1,11 @@
 #include "parser/parser.h"
+#include "tools/die.h"
 
 int main(int argc, char** argv) {
-	parser_init();
+	if (!parser_init()) {
+		die("Initialization failed. Aborting.\n");
+	}
+
+	parser_free();
 	return 0;
 }
