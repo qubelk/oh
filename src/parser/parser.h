@@ -5,9 +5,9 @@
 // @return
 // 	0: if init failed.
 // 	1: if init success.
-int parser_init();
+int parser_init(void);
 
 // Clean all parser internal data.
-void parser_free();
+void parser_free(void);
 
 #endif
