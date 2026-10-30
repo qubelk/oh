@@ -23,7 +23,7 @@ enum {
 // 	OH_OHFILE_LOWER: if its `ohfile`.
 //
 // This returns need for pattern matching.
-static int search_ohfile() {
+static int search_ohfile(void) {
 	DIR* rootdir = opendir("./");
 	if (rootdir == NULL) {
 		return OH_ERR_FAILED_TO_OPEN_DIRECTORY;
@@ -51,7 +51,7 @@ static int search_ohfile() {
 	return OH_ERR_FILE_NOT_FOUND;
 }
 
-static FILE* open_ohfile() {
+static FILE* open_ohfile(void) {
 	int ret = search_ohfile();
 
 	switch (ret) {
@@ -91,7 +91,7 @@ static FILE* open_ohfile() {
 // So no need to check this pointer to NULL.
 FILE* ohfile;
 
-int parser_init() {
+int parser_init(void) {
 	ohfile = open_ohfile();
 	if (ohfile == NULL) {
 		return 0;
@@ -100,6 +100,6 @@ int parser_init() {
 	return 1;
 }
 
-void parser_free() {
+void parser_free(void) {
 	fclose(ohfile);
 }
