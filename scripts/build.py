@@ -5,7 +5,7 @@ import subprocess
 
 # Use clang, for -Weverything flag
 cc = "clang"
-cflags: list[str] = [ "-Weverything", "-Og", "-ggdb", "-fsanitize=address,undefined" ]
+cflags: list[str] = [ "-std=c11", "-pedantic", "-Weverything", "-Og", "-ggdb", "-fsanitize=address,undefined" ]
 cflags_str = " ".join(cflags)
 
 paths: list[str] = []
