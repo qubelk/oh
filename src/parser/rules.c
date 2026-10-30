@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-Rule* rule_alloc(char* name, Files* deps, char* cmd) {
+Rule* rule_alloc(char* name, FilePaths* deps, char* cmd) {
 	Rule* rule = malloc(sizeof(*rule));
 	if (rule == NULL) {
 		perror("Allocation failed");
