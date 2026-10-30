@@ -12,13 +12,13 @@ typedef struct {
 	// Dependency are optional, in this case is be NULL.
 	// Dependecy syntax are, ( file1 | file2 | ... ) after, command name.
 	// Example: `build: ( main.c | foo.h | foo.c )`
-	Files* deps;
+	FilePaths* deps;
 
 	// Cmd is a body of command, be called by shell.
 	char* cmd;
 } Rule;
 
-Rule* rule_alloc(char* name, Files* deps, char* cmd);
+Rule* rule_alloc(char* name, FilePaths* deps, char* cmd);
 
 // Dynamic array of Rules
 typedef struct {

@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
 #include "parser.h"
 
 #include "tools/die.h"
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -102,4 +105,105 @@ int parser_init(void) {
 
 void parser_free(void) {
 	fclose(ohfile);
+}
+
+static void skip_whitespaces(char* line, size_t* index) {
+	size_t i = *index;
+	if (line[i] == ' ') {
+		while (line[i] == ' ') {
+			++i;
+		}
+	}
+
+	*index = i;
+}
+
+static char* parse_rule_name(char* buf, char* line, size_t* index) {
+	size_t i = *index;
+	size_t buf_count = 0;
+
+	while (isalnum(line[i])) {
+		if (buf_count >= 256 - 1) {
+			die("Buffer overflow. Rule name cannot be over 255 characters\n");
+		}
+
+		buf[buf_count++] = line[i];
+		++i;
+	}
+
+	skip_whitespaces(line, &i);
+
+	if (line[i] != ':') {
+		die("Expect `:` after `%s` rule name\n", buf);
+	}
+
+	++i;
+
+	*index = i;
+
+	return buf;
+}
+
+// Check exists file or not.
+// @return
+// 	0: if not.
+// 	1: if exists.
+static int file_exists(char* path) {
+	FILE* f = fopen(path, "r");
+	if (f == NULL) {
+		return 0;
+	}
+
+	fclose(f);
+	return 1;
+}
+
+static FilePaths parse_rule_deps(char* line, size_t* index) {
+	size_t i = *index;
+	FilePaths paths = {0};
+	skip_whitespaces(line, &i);
+
+	if (line[i] == '(') {
+		++i;
+		skip_whitespaces(line, &i);
+
+		if (line[i] != ')') {
+			die("Expected closing paren in dependency list\n");
+		}
+	}
+
+	*index = i;
+
+	return paths;
+}
+
+// Parse rule, save allocated Node to out param.
+static Node* parse_rule(char* line, size_t* i) {
+	char buf[256];
+	parse_rule_name(buf, line, i);
+	parse_rule_deps(line, i);
+	printf("Name: %s\n", buf);
+}
+
+Nodes parser_parse(void) {
+	char* line;
+	size_t line_size;
+	ssize_t line_length;
+
+	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
+		for (size_t i = 0; i < line_length; ++i) {
+			printf("Char: %c\n", line[i]);
+
+			if (line[i] == '#') {
+				break;
+			}
+
+			if (isalnum(line[i])) {
+				parse_rule(line, &i);
+			}
+		}
+	}
+
+
+	free(line);
 }

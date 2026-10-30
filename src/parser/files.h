@@ -3,11 +3,11 @@
 
 #include <stdio.h>
 
-// Dynamic array of Files.
+// Dynamic array of File paths.
 typedef struct {
-	FILE** data;
+	char** data;
 	size_t count;
 	size_t capacity;
-} Files;
+} FilePaths;
 
 #endif
