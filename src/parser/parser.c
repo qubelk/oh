@@ -107,6 +107,31 @@ void parser_free(void) {
 	fclose(ohfile);
 }
 
+static char* parse_rule_name(char* buf, char* line, size_t* i) {
+	size_t buf_count = 0;
+	while (isalnum(line[*i])) {
+		if (buf_count >= 256 - 1) {
+			die("Buffer overflow. Rule name cannot be over 255 characters\n");
+		}
+
+		buf[buf_count++] = line[*i];
+		++*i;
+	}
+
+	if (line[*i] != ':') {
+		die("Expect `:` after `%s` rule name\n", buf);
+	}
+
+	return buf;
+}
+
+// Parse rule, save allocated Node to out param.
+static Node* parse_rule(char* line, size_t* i) {
+	char buf[256];
+	parse_rule_name(buf, line, i);
+	printf("Name: %s\n", buf);
+}
+
 Nodes parser_parse(void) {
 	char* line;
 	size_t line_size;
@@ -114,8 +139,14 @@ Nodes parser_parse(void) {
 
 	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
 		for (size_t i = 0; i < line_length; ++i) {
+			printf("Char: %c\n", line[i]);
+
 			if (line[i] == '#') {
 				break;
+			}
+
+			if (isalnum(line[i])) {
+				parse_rule(line, &i);
 			}
 		}
 	}
