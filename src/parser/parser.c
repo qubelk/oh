@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
 #include "parser.h"
 
 #include "tools/die.h"
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -102,4 +105,19 @@ int parser_init(void) {
 
 void parser_free(void) {
 	fclose(ohfile);
+}
+
+Nodes parser_parse(void) {
+	char* line;
+	size_t line_size;
+	ssize_t line_length;
+
+	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
+		for (size_t i = 0; i < line_length; ++i) {
+
+		}
+	}
+
+
+	free(line);
 }

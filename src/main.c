@@ -6,6 +6,8 @@ int main(int argc, char** argv) {
 		die("Initialization failed. Aborting.\n");
 	}
 
+	parser_parse();
+
 	parser_free();
 	return 0;
 }
