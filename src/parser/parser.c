@@ -114,7 +114,9 @@ Nodes parser_parse(void) {
 
 	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
 		for (size_t i = 0; i < line_length; ++i) {
-
+			if (line[i] == '#') {
+				break;
+			}
 		}
 	}
 
