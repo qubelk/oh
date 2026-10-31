@@ -1,6 +1,6 @@
 #include "cursor.h"
 
-char cursor_peek(Cursor* cursor) {
+char cursor_peek(const Cursor* cursor) {
 	return cursor->line[cursor->pos];
 }
 

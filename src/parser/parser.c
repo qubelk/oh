@@ -109,7 +109,7 @@ void parser_free(void) {
 	fclose(ohfile);
 }
 
-static int is_ident(Cursor* cursor) {
+static int is_ident(const Cursor* cursor) {
 	char peek = cursor_peek(cursor);
 	return isalnum(peek) || peek == '_' || peek == '.';
 }
@@ -155,7 +155,7 @@ static char* parse_rule_name(char* buf, Cursor* cursor) {
 // @return
 // 	0: if not.
 // 	1: if exists.
-static int file_exists(char* path) {
+static int file_exists(const char* path) {
 	FILE* f = fopen(path, "r");
 	if (f == NULL) {
 		return 0;
