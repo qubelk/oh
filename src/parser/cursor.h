@@ -4,8 +4,11 @@
 #include <stddef.h>
 
 typedef struct {
-	// Current line.
-	char* line;
+	struct {
+		char* data;
+		size_t count;
+		size_t capacity;
+	} input;
 
 	// Current position.
 	size_t pos;

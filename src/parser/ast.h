@@ -11,14 +11,14 @@ typedef enum {
 typedef struct {
 	NodeKind kind;
 	union {
-		Rule* rule;
+		Rule rule;
 	} as;
 } Node;
 
-Node* node_alloc(NodeKind kind);
+Node node_new(NodeKind kind);
 
 typedef struct {
-	Node** data;
+	Node* data;
 	size_t count;
 	size_t capacity;
 } Nodes;

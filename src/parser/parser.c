@@ -12,6 +12,12 @@
 #include <string.h>
 #include <sys/stat.h>
 
+// Rule name length include null.
+#define MAX_RULE_NAME_LENGTH 256
+
+// Rule command length include null.
+#define MAX_RULE_CMD_LENGTH 1024
+
 // This enum is returned value of ohfile search.
 enum {
 	OH_ERR_FAILED_TO_OPEN_DIRECTORY,
@@ -94,7 +100,7 @@ static FILE* open_ohfile(void) {
 
 // Ohfile opening in parser_init, main function checks parser_init for fail, and die if its.
 // So no need to check this pointer to NULL.
-FILE* ohfile;
+static FILE* ohfile;
 
 int parser_init(void) {
 	ohfile = open_ohfile();
@@ -126,8 +132,8 @@ static char* parse_ident(char* buf, Cursor* cursor) {
 	size_t buf_count = 0;
 
 	while (is_ident(cursor)) {
-		if (buf_count >= 256 - 1) {
-			die("Buffer overflow. Rule name cannot be over 255 characters\n");
+		if (buf_count >= MAX_RULE_NAME_LENGTH - 1) {
+			die("Buffer overflow. Rule name cannot be over %d characters\n", MAX_RULE_NAME_LENGTH - 1);
 		}
 
 		buf[buf_count++] = cursor_peek(cursor);
@@ -170,7 +176,7 @@ static char* parse_filename(Cursor* cursor) {
 		return NULL;
 	}
 
-	char buf[256];
+	char buf[MAX_RULE_NAME_LENGTH];
 	while (is_ident(cursor)) {
 		parse_ident(buf, cursor);
 	}
@@ -183,7 +189,7 @@ static char* parse_filename(Cursor* cursor) {
 }
 
 static void parse_filenames(FilePaths* paths, Cursor* cursor) {
-	DA_PTR_APPEND(paths, parse_filename(cursor));
+	DA_APPEND(*paths, parse_filename(cursor));
 
 	skip_whitespaces(cursor);
 
@@ -194,8 +200,8 @@ static void parse_filenames(FilePaths* paths, Cursor* cursor) {
 	}
 }
 
-static FilePaths parse_rule_deps(Cursor* cursor) {
-	FilePaths paths = {0};
+static FilePaths* parse_rule_deps(Cursor* cursor) {
+	FilePaths* paths = calloc(1, sizeof(*paths));
 	skip_whitespaces(cursor);
 
 	if (cursor_peek(cursor) == '(') {
@@ -203,7 +209,7 @@ static FilePaths parse_rule_deps(Cursor* cursor) {
 		skip_whitespaces(cursor);
 
 		if (is_ident(cursor)) {
-			parse_filenames(&paths, cursor);
+			parse_filenames(paths, cursor);
 		}
 
 		skip_whitespaces(cursor);
@@ -211,45 +217,85 @@ static FilePaths parse_rule_deps(Cursor* cursor) {
 		if (cursor_peek(cursor) != ')') {
 			die("Expected closing paren in dependency list\n");
 		}
+
+		cursor_advance(cursor);
 	}
 
 	return paths;
 }
 
-static Node* parse_rule(Cursor* cursor) {
-	char buf[256];
-	parse_rule_name(buf, cursor);
-	FilePaths paths = parse_rule_deps(cursor);
+static void parse_rule_cmd(Commands* commands, Cursor* cursor) {
+	// In current position, we start from '\t', so advance.
+	cursor_advance(cursor);
 
-	printf("Name: %s\n", buf);
-	for (size_t i = 0; i < paths.count; ++i) {
-		printf("Name: %s\n", paths.data[i]);
+	char buf[MAX_RULE_CMD_LENGTH];
+	size_t buf_count = 0;
+	while (cursor_peek(cursor) != '\n') {
+		if (buf_count >= MAX_RULE_CMD_LENGTH - 1) {
+			die("Buffer overflow. Rule command cannot be over %d characters\n", MAX_RULE_CMD_LENGTH - 1);
+		}
+
+		buf[buf_count++] = cursor_peek(cursor);
+		cursor_advance(cursor);
 	}
 
-	DA_POINTERS_FREE(paths);
+	DA_APPEND(*commands, strdup(buf));
+
+	cursor_advance(cursor);
+
+	if (cursor_peek(cursor) == '\t') {
+		parse_rule_cmd(commands, cursor);
+	}
 }
 
-Nodes parser_parse(void) {
-	char* line;
-	size_t line_size;
-	ssize_t line_length;
+static void parse_rule(Node* node, Cursor* cursor) {
+	char name_buf[MAX_RULE_NAME_LENGTH];
+	Commands* commands = calloc(1, sizeof(*commands));
 
-	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
-		for (size_t i = 0; i < line_length; ++i) {
-			Cursor cursor = {line, i};
-			printf("Char: %c\n", cursor_peek(&cursor));
+	parse_rule_name(name_buf, cursor);
+	FilePaths* paths = parse_rule_deps(cursor);
 
-			if (cursor_peek(&cursor) == '#') {
-				break;
-			}
+	cursor_advance(cursor);
+	if (cursor_peek(cursor) == '\t') {
+		parse_rule_cmd(commands, cursor);
+	}
 
-			if (is_ident(&cursor)) {
-				parse_rule(&cursor);
-			}
+	node->as.rule = rule_new(strdup(name_buf), paths, commands);
+}
 
-			i += cursor.pos;
+static Node parser_parse_node(Cursor* cursor) {
+	Node node = node_new(NK_RULE);
+
+	skip_whitespaces(cursor);
+
+	if (cursor_peek(cursor) == '#') {
+		while (cursor_peek(cursor) != '\n') {
+			continue;
 		}
 	}
 
-	free(line);
+	if (is_ident(cursor)) {
+		parse_rule(&node, cursor);
+	}
+
+	return node;
+}
+
+Nodes parser_parse(void) {
+	Cursor cursor = {.pos = 0};
+	int ch;
+	Nodes nodes = {0};
+
+	while ((ch = fgetc(ohfile)) != EOF) {
+		DA_APPEND(cursor.input, ch);
+	}
+
+	while (cursor.pos < cursor.input.count) {
+
+		Node node = parser_parse_node(&cursor);
+		DA_APPEND(nodes, node);
+	}
+
+	DA_FREE(cursor.input);
+	DA_FREE(nodes);
 }

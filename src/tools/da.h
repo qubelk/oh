@@ -7,42 +7,37 @@
 
 #define DA_APPEND(da, item) \
 	do {\
-		if (da.count >= da.capacity) {\
-			if (da.capacity == 0) {\
-				da.capacity = 4;\
+		if ((da).count >= (da).capacity) {\
+			if ((da).capacity == 0) {\
+				(da).capacity = 4;\
 			} else {\
-				da.capacity *= 2;\
+				(da).capacity *= 2;\
 			}\
-			da.data = realloc(da.data, da.capacity * sizeof(*da.data));\
+			(da).data = realloc((da).data, (da).capacity * sizeof(*(da).data));\
 		}\
-		da.data[da.count++] = item;\
-	} while (0)
-
-#define DA_PTR_APPEND(da, item) \
-	do {\
-		if (da->count >= da->capacity) {\
-			if (da->capacity == 0) {\
-				da->capacity = 4;\
-			} else {\
-				da->capacity *= 2;\
-			}\
-			da->data = realloc(da->data, da->capacity * sizeof(*da->data));\
-		}\
-		da->data[da->count++] = item;\
+		(da).data[(da).count++] = item;\
 	} while (0)
 
 #define DA_FREE(da) \
 	do {\
-		free(da.data);\
+		free((da).data);\
 	} while (0)
 
-// Use it for dynamic array of pointers.
 #define DA_POINTERS_FREE(da) \
 	do {\
-		for (size_t i = 0; i < da.count; ++i) {\
-			free(da.data[i]);\
+		for (size_t i = 0; i < (da).count; ++i) {\
+			free((da).data[i]);\
 		}\
-		free(da.data);\
+		free((da).data);\
+	} while (0)
+
+#define DAP_POINTERS_FREE(da) \
+	do {\
+		for (size_t i = 0; i < (da)->count; ++i) {\
+			free((da)->data[i]);\
+		}\
+		free((da)->data);\
+		free((da));\
 	} while (0)
 
 #endif
