@@ -1,13 +1,15 @@
 #include "parser/parser.h"
 #include "tools/die.h"
+#include "exec/exec.h"
 
 int main(int argc, char** argv) {
 	if (!parser_init()) {
 		die("Initialization failed. Aborting.\n");
 	}
 
-	parser_parse();
+	Nodes nodes = parser_parse();
+	exec_execute_ast(&nodes);
 
-	parser_free();
+	parser_free(nodes);
 	return 0;
 }

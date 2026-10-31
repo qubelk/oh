@@ -1,7 +1,7 @@
 #ifndef OH_PARSER_H_
 #define OH_PARSER_H_
 
-#include "ast.h"
+#include "ast/ast.h"
 
 // Search and open `ohfile` or `Ohfile` in root directory which `oh` cli called.
 // @return
