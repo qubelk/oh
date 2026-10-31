@@ -3,6 +3,7 @@
 
 #include "tools/die.h"
 #include "tools/da.h"
+#include "cursor.h"
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -108,53 +109,44 @@ void parser_free(void) {
 	fclose(ohfile);
 }
 
-static int is_ident(char* line, size_t index) {
-	return isalnum(line[index]) || line[index] == '_' || line[index] == '.';
+static int is_ident(Cursor* cursor) {
+	char peek = cursor_peek(cursor);
+	return isalnum(peek) || peek == '_' || peek == '.';
 }
 
-static void skip_whitespaces(char* line, size_t* index) {
-	size_t i = *index;
-	if (line[i] == ' ') {
-		while (line[i] == ' ') {
-			++i;
+static void skip_whitespaces(Cursor* cursor) {
+	if (cursor_peek(cursor) == ' ') {
+		while (cursor_peek(cursor) == ' ') {
+			cursor_advance(cursor);
 		}
 	}
-
-	*index = i;
 }
 
-static char* parse_ident(char* buf, char* line, size_t* index) {
-	size_t i = *index;
+static char* parse_ident(char* buf, Cursor* cursor) {
 	size_t buf_count = 0;
 
-	while (is_ident(line, i)) {
+	while (is_ident(cursor)) {
 		if (buf_count >= 256 - 1) {
 			die("Buffer overflow. Rule name cannot be over 255 characters\n");
 		}
 
-		buf[buf_count++] = line[i];
-		++i;
+		buf[buf_count++] = cursor_peek(cursor);
+		cursor_advance(cursor);
 	}
-
-	*index = i;
 
 	return buf;
 }
 
-static char* parse_rule_name(char* buf, char* line, size_t* index) {
-	parse_ident(buf, line, index);
+static char* parse_rule_name(char* buf, Cursor* cursor) {
+	parse_ident(buf, cursor);
 
-	size_t i = *index;
+	skip_whitespaces(cursor);
 
-	skip_whitespaces(line, &i);
-
-	if (line[i] != ':') {
+	if (cursor_peek(cursor) != ':') {
 		die("Expect `:` after `%s` rule name\n", buf);
 	}
 
-	++i;
-
-	*index = i;
+	cursor_advance(cursor);
 
 	return buf;
 }
@@ -173,19 +165,18 @@ static int file_exists(char* path) {
 	return 1;
 }
 
-static FilePaths parse_rule_deps(char* line, size_t* index) {
-	size_t i = *index;
+static FilePaths parse_rule_deps(Cursor* cursor) {
 	FilePaths paths = {0};
-	skip_whitespaces(line, &i);
+	skip_whitespaces(cursor);
 
-	if (line[i] == '(') {
-		++i;
-		skip_whitespaces(line, &i);
+	if (cursor_peek(cursor) == '(') {
+		cursor_advance(cursor);
+		skip_whitespaces(cursor);
 
-		if (is_ident(line, i)) {
+		if (is_ident(cursor)) {
 			char buf[256];
-			while (is_ident(line, i)) {
-				parse_ident(buf, line, &i);
+			while (is_ident(cursor)) {
+				parse_ident(buf, cursor);
 			}
 
 			if (!file_exists(buf)) {
@@ -195,23 +186,22 @@ static FilePaths parse_rule_deps(char* line, size_t* index) {
 			DA_APPEND(paths, strdup(buf));
 		}
 
-		skip_whitespaces(line, &i);
+		skip_whitespaces(cursor);
 
-		if (line[i] != ')') {
+		if (cursor_peek(cursor) != ')') {
 			die("Expected closing paren in dependency list\n");
 		}
 	}
 
-	*index = i;
-
 	return paths;
 }
 
-static Node* parse_rule(char* line, size_t* i) {
+static Node* parse_rule(Cursor* cursor) {
 	char buf[256];
-	parse_rule_name(buf, line, i);
-	FilePaths paths = parse_rule_deps(line, i);
+	parse_rule_name(buf, cursor);
+	FilePaths paths = parse_rule_deps(cursor);
 	printf("Name: %s\n", buf);
+	printf("Path: %s\n", paths.data[0]);
 	DA_POINTERS_FREE(paths);
 }
 
@@ -222,15 +212,18 @@ Nodes parser_parse(void) {
 
 	while ((line_length = getline(&line, &line_size, ohfile)) != EOF) {
 		for (size_t i = 0; i < line_length; ++i) {
-			printf("Char: %c\n", line[i]);
+			Cursor cursor = {line, i};
+			printf("Char: %c\n", cursor_peek(&cursor));
 
-			if (line[i] == '#') {
+			if (cursor_peek(&cursor) == '#') {
 				break;
 			}
 
-			if (is_ident(line, i)) {
-				parse_rule(line, &i);
+			if (is_ident(&cursor)) {
+				parse_rule(&cursor);
 			}
+
+			i += cursor.pos;
 		}
 	}
 
