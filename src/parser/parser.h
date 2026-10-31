@@ -10,7 +10,7 @@
 int parser_init(void);
 
 // Clean all parser internal data.
-void parser_free(void);
+void parser_free(Nodes nodes);
 
 Nodes parser_parse(void);
 

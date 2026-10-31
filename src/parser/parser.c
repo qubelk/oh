@@ -111,8 +111,15 @@ int parser_init(void) {
 	return 1;
 }
 
-void parser_free(void) {
+void parser_free(Nodes nodes) {
 	fclose(ohfile);
+	for (size_t i = 0; i < nodes.count; ++i) {
+		free(nodes.data[i].as.rule.name);
+		DAP_POINTERS_FREE(nodes.data[i].as.rule.deps);
+		DAP_POINTERS_FREE(nodes.data[i].as.rule.commands);
+	}
+
+	DA_FREE(nodes);
 }
 
 static int is_ident(const Cursor* cursor) {
@@ -296,11 +303,5 @@ Nodes parser_parse(void) {
 	}
 
 	DA_FREE(cursor.input);
-	for (size_t i = 0; i < nodes.count; ++i) {
-		free(nodes.data[i].as.rule.name);
-		DAP_POINTERS_FREE(nodes.data[i].as.rule.deps);
-		DAP_POINTERS_FREE(nodes.data[i].as.rule.commands);
-	}
-
-	DA_FREE(nodes);
+	return nodes;
 }
