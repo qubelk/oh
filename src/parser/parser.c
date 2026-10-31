@@ -165,6 +165,35 @@ static int file_exists(char* path) {
 	return 1;
 }
 
+static char* parse_filename(Cursor* cursor) {
+	if (!is_ident(cursor)) {
+		return NULL;
+	}
+
+	char buf[256];
+	while (is_ident(cursor)) {
+		parse_ident(buf, cursor);
+	}
+
+	if (!file_exists(buf)) {
+		die("Expected valid file path: %s not exists\n", buf);
+	}
+
+	return strdup(buf);
+}
+
+static void parse_filenames(FilePaths* paths, Cursor* cursor) {
+	DA_PTR_APPEND(paths, parse_filename(cursor));
+
+	skip_whitespaces(cursor);
+
+	if (cursor_peek(cursor) == '|') {
+		cursor_advance(cursor);
+		skip_whitespaces(cursor);
+		parse_filenames(paths, cursor);
+	}
+}
+
 static FilePaths parse_rule_deps(Cursor* cursor) {
 	FilePaths paths = {0};
 	skip_whitespaces(cursor);
@@ -174,16 +203,7 @@ static FilePaths parse_rule_deps(Cursor* cursor) {
 		skip_whitespaces(cursor);
 
 		if (is_ident(cursor)) {
-			char buf[256];
-			while (is_ident(cursor)) {
-				parse_ident(buf, cursor);
-			}
-
-			if (!file_exists(buf)) {
-				die("Expected valid file path: %s not exists\n", buf);
-			}
-
-			DA_APPEND(paths, strdup(buf));
+			parse_filenames(&paths, cursor);
 		}
 
 		skip_whitespaces(cursor);
@@ -200,8 +220,12 @@ static Node* parse_rule(Cursor* cursor) {
 	char buf[256];
 	parse_rule_name(buf, cursor);
 	FilePaths paths = parse_rule_deps(cursor);
+
 	printf("Name: %s\n", buf);
-	printf("Path: %s\n", paths.data[0]);
+	for (size_t i = 0; i < paths.count; ++i) {
+		printf("Name: %s\n", paths.data[i]);
+	}
+
 	DA_POINTERS_FREE(paths);
 }
 
@@ -226,7 +250,6 @@ Nodes parser_parse(void) {
 			i += cursor.pos;
 		}
 	}
-
 
 	free(line);
 }
