@@ -18,6 +18,19 @@
 		da.data[da.count++] = item;\
 	} while (0)
 
+#define DA_PTR_APPEND(da, item) \
+	do {\
+		if (da->count >= da->capacity) {\
+			if (da->capacity == 0) {\
+				da->capacity = 4;\
+			} else {\
+				da->capacity *= 2;\
+			}\
+			da->data = realloc(da->data, da->capacity * sizeof(*da->data));\
+		}\
+		da->data[da->count++] = item;\
+	} while (0)
+
 #define DA_FREE(da) \
 	do {\
 		free(da.data);\
