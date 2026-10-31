@@ -2,16 +2,10 @@
 
 #include <stdlib.h>
 
-Rule* rule_alloc(char* name, FilePaths* deps, char* cmd) {
-	Rule* rule = malloc(sizeof(*rule));
-	if (rule == NULL) {
-		perror("Allocation failed");
-		return NULL;
-	}
-
-	rule->name = name;
-	rule->deps = deps;
-	rule->name = name;
-
-	return rule;
+Rule rule_new(char* name, FilePaths* deps, Commands* cmd) {
+	return (Rule){
+		.name = name,
+		.deps = deps,
+		.cmd = cmd,
+	};
 }

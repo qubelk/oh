@@ -4,6 +4,12 @@
 #include "files.h"
 
 typedef struct {
+	char** data;
+	size_t count;
+	size_t capacity;
+} Commands;
+
+typedef struct {
 	// Name of command should be end with `:` prefix.
 	// Example: `build:`, `run:`, etc.
 	char* name;
@@ -15,16 +21,9 @@ typedef struct {
 	FilePaths* deps;
 
 	// Cmd is a body of command, be called by shell.
-	char* cmd;
+	Commands* cmd;
 } Rule;
 
-Rule* rule_alloc(char* name, FilePaths* deps, char* cmd);
-
-// Dynamic array of Rules
-typedef struct {
-	Rule** data;
-	size_t count;
-	size_t capacity;
-} Rules;
+Rule rule_new(char* name, FilePaths* deps, Commands* cmd);
 
 #endif

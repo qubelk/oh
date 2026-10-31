@@ -65,7 +65,7 @@ static void da_pointers_test(void) {
 	Pointers p = {0};
 
 	for (size_t i = 0; i < 5; ++i) {
-		int* ptr = malloc(sizeof(*ptr));
+		int* ptr = calloc(1, sizeof(*ptr));
 		*ptr = i + 1;
 		DA_APPEND(p, ptr);
 	}
