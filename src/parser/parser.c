@@ -2,6 +2,7 @@
 #include "parser.h"
 
 #include "tools/die.h"
+#include "tools/da.h"
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -107,6 +108,10 @@ void parser_free(void) {
 	fclose(ohfile);
 }
 
+static int is_ident(char* line, size_t index) {
+	return isalnum(line[index]) || line[index] == '_' || line[index] == '.';
+}
+
 static void skip_whitespaces(char* line, size_t* index) {
 	size_t i = *index;
 	if (line[i] == ' ') {
@@ -118,11 +123,11 @@ static void skip_whitespaces(char* line, size_t* index) {
 	*index = i;
 }
 
-static char* parse_rule_name(char* buf, char* line, size_t* index) {
+static char* parse_ident(char* buf, char* line, size_t* index) {
 	size_t i = *index;
 	size_t buf_count = 0;
 
-	while (isalnum(line[i])) {
+	while (is_ident(line, i)) {
 		if (buf_count >= 256 - 1) {
 			die("Buffer overflow. Rule name cannot be over 255 characters\n");
 		}
@@ -130,6 +135,16 @@ static char* parse_rule_name(char* buf, char* line, size_t* index) {
 		buf[buf_count++] = line[i];
 		++i;
 	}
+
+	*index = i;
+
+	return buf;
+}
+
+static char* parse_rule_name(char* buf, char* line, size_t* index) {
+	parse_ident(buf, line, index);
+
+	size_t i = *index;
 
 	skip_whitespaces(line, &i);
 
@@ -167,6 +182,21 @@ static FilePaths parse_rule_deps(char* line, size_t* index) {
 		++i;
 		skip_whitespaces(line, &i);
 
+		if (is_ident(line, i)) {
+			char buf[256];
+			while (is_ident(line, i)) {
+				parse_ident(buf, line, &i);
+			}
+
+			if (!file_exists(buf)) {
+				die("Expected valid file path: %s not exists\n", buf);
+			}
+
+			DA_APPEND(paths, strdup(buf));
+		}
+
+		skip_whitespaces(line, &i);
+
 		if (line[i] != ')') {
 			die("Expected closing paren in dependency list\n");
 		}
@@ -177,12 +207,12 @@ static FilePaths parse_rule_deps(char* line, size_t* index) {
 	return paths;
 }
 
-// Parse rule, save allocated Node to out param.
 static Node* parse_rule(char* line, size_t* i) {
 	char buf[256];
 	parse_rule_name(buf, line, i);
-	parse_rule_deps(line, i);
+	FilePaths paths = parse_rule_deps(line, i);
 	printf("Name: %s\n", buf);
+	DA_POINTERS_FREE(paths);
 }
 
 Nodes parser_parse(void) {
@@ -198,7 +228,7 @@ Nodes parser_parse(void) {
 				break;
 			}
 
-			if (isalnum(line[i])) {
+			if (is_ident(line, i)) {
 				parse_rule(line, &i);
 			}
 		}
