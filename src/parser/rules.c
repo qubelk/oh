@@ -2,10 +2,10 @@
 
 #include <stdlib.h>
 
-Rule rule_new(char* name, FilePaths* deps, Commands* cmd) {
+Rule rule_new(char* name, FilePaths* deps, Commands* commands) {
 	return (Rule){
 		.name = name,
 		.deps = deps,
-		.cmd = cmd,
+		.commands = commands,
 	};
 }

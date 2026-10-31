@@ -21,9 +21,9 @@ typedef struct {
 	FilePaths* deps;
 
 	// Cmd is a body of command, be called by shell.
-	Commands* cmd;
+	Commands* commands;
 } Rule;
 
-Rule rule_new(char* name, FilePaths* deps, Commands* cmd);
+Rule rule_new(char* name, FilePaths* deps, Commands* commands);
 
 #endif

@@ -25,16 +25,16 @@
 
 #define DA_POINTERS_FREE(da) \
 	do {\
-		for (size_t i = 0; i < (da).count; ++i) {\
-			free((da).data[i]);\
+		for (size_t k = 0; k < (da).count; ++k) {\
+			free((da).data[k]);\
 		}\
 		free((da).data);\
 	} while (0)
 
 #define DAP_POINTERS_FREE(da) \
 	do {\
-		for (size_t i = 0; i < (da)->count; ++i) {\
-			free((da)->data[i]);\
+		for (size_t k = 0; k < (da)->count; ++k) {\
+			free((da)->data[k]);\
 		}\
 		free((da)->data);\
 		free((da));\

@@ -291,11 +291,16 @@ Nodes parser_parse(void) {
 	}
 
 	while (cursor.pos < cursor.input.count) {
-
 		Node node = parser_parse_node(&cursor);
 		DA_APPEND(nodes, node);
 	}
 
 	DA_FREE(cursor.input);
+	for (size_t i = 0; i < nodes.count; ++i) {
+		free(nodes.data[i].as.rule.name);
+		DAP_POINTERS_FREE(nodes.data[i].as.rule.deps);
+		DAP_POINTERS_FREE(nodes.data[i].as.rule.commands);
+	}
+
 	DA_FREE(nodes);
 }
