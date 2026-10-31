@@ -135,6 +135,16 @@ static void skip_whitespaces(Cursor* cursor) {
 	}
 }
 
+static void skip_comments(Cursor* cursor) {
+	if (cursor_peek(cursor) == '#') {
+		while (cursor_peek(cursor) != '\n') {
+			cursor_advance(cursor);
+		}
+
+		cursor_advance(cursor);
+	}
+}
+
 static char* parse_ident(char* buf, Cursor* cursor) {
 	size_t buf_count = 0;
 
@@ -259,13 +269,19 @@ static void parse_rule(Node* node, Cursor* cursor) {
 	char name_buf[MAX_RULE_NAME_LENGTH];
 	Commands* commands = calloc(1, sizeof(*commands));
 
-	parse_rule_name(name_buf, cursor);
+
+	if (is_ident(cursor)) {
+		parse_rule_name(name_buf, cursor);
+	}
+
 	FilePaths* paths = parse_rule_deps(cursor);
 
 	cursor_advance(cursor);
 	if (cursor_peek(cursor) == '\t') {
 		parse_rule_cmd(commands, cursor);
 	}
+
+	cursor_advance(cursor);
 
 	node->as.rule = rule_new(strdup(name_buf), paths, commands);
 }
@@ -274,16 +290,9 @@ static Node parser_parse_node(Cursor* cursor) {
 	Node node = node_new(NK_RULE);
 
 	skip_whitespaces(cursor);
+	skip_comments(cursor);
 
-	if (cursor_peek(cursor) == '#') {
-		while (cursor_peek(cursor) != '\n') {
-			continue;
-		}
-	}
-
-	if (is_ident(cursor)) {
-		parse_rule(&node, cursor);
-	}
+	parse_rule(&node, cursor);
 
 	return node;
 }
