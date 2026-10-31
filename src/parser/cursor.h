@@ -11,7 +11,7 @@ typedef struct {
 	size_t pos;
 } Cursor;
 
-char cursor_peek(Cursor* cursor);
+char cursor_peek(const Cursor* cursor);
 void cursor_advance(Cursor* cursor);
 
 #endif
