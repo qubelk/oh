@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
 	}
 
 	Nodes nodes = parser_parse();
-	exec_execute_ast(&nodes);
+	exec_execute_ast(argc, argv, &nodes);
 
 	parser_free(nodes);
 	return 0;
