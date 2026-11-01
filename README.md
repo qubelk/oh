@@ -24,4 +24,4 @@ Usage:
 
 ## Why i make it
 
-I was bored and wanted to try to `make` like utility. I don't think i'm going to continue working on `oh`
+I was bored and wanted to try to `make` like utility, also i want to practice my skills. I don't think i'm going to continue working on `oh`
